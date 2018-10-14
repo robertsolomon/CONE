@@ -6,7 +6,7 @@ pragma solidity 0.4.24;
  *      exclusive rights to an implementing contracts activites.  It is analogous to Ownable but requires
  *      construtor settting as opposed to msg.sender assignment.
  */
-contract Custodial {
+contract Refundable {
     address public custodian;
 
     event CustodyRenounced(address indexed previousCustodian);

@@ -1,0 +1,41 @@
+@startuml asdf
+
+interface IEscrow {
+    ** functions **
+    + deposit(unit256 value)
+    + issuePartialRedemption(unit256 amount, unit256 releaseDate)
+    + issueFullRedemption()
+    + dispute(unit256 amount)
+    + refund(unit256 amount)
+    + withdraw()
+}
+
+
+class Escrow {
+
+    + address openLawContractId
+    + ctor(address _contractId, address _payee, address _payer, uint256 value, uint256 expiry)
+
+}
+
+IEscrow <|-- Escrow
+class Custodial {
+
+    + address custodian
+    + mapping(address => address) delegateAssignments
+    + ctor(address _custodian)
+    + transferCustody(address _newCustodian)
+    + temporalDelegate(address _delegate, uint256 _termStart, uint256 _termEnd)
+    + relinquishCustody()
+}
+
+class EscrowManager {
+
+    + mapping(address => Escrow) 
+    +ctor(address _custodian)
+    + settleDispute(address _contract, address _payee, uint256 _amount)
+}
+
+Custodial <|-- EscrowManager
+EscrowManager o-- Escrow
+@enduml

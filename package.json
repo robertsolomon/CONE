@@ -7,7 +7,7 @@
 		"test": "test"
 	},
 	"scripts": {
-		"test": "truffle test",
+		"test": "./test/run.sh",
 		"coverage": "./node_modules/.bin/solidity-coverage"
 	},
 	"dependencies": {
