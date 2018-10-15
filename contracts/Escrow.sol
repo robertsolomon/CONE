@@ -1,15 +1,28 @@
 pragma solidity 0.4.24;
 import "./custodial.sol";
+import "./IEscrow.sol";
 import "zeppelin-solidity/contracts/token/ERC20/ERC20.sol";
+import "zeppelin-solidity/contracts/math/Safemath.sol";
 
-contract Escrow is Refundable {
+contract Escrow is IEscro, Custodial {
+    
+    enum EscrowStatus {Active, InDispute, Approved, Settled}
+
+    using SafeMath for uint256;
+    ERC20 public currency;
+    address public payer;
+    address public payee;
+    uint256 public value;
+    uint256 disputeValue;
+    EscrowStatus public status;
+
     modifier PayerOnly(address _contract) {
-        require(contracts[_contract].payer == msg.sender, "Not payer in contract referenced");
+        require(payer == msg.sender, "Not payer in contract referenced");
         _;
     }
 
     modifier PayeeOnly(address _contract) {
-        require(contracts[_contract].payee == msg.sender, "Not payee in contract referenced");
+        require(payee == msg.sender, "Not payee in contract referenced");
         _;
     }
 
@@ -17,49 +30,59 @@ contract Escrow is Refundable {
         require(contracts[_contract].state == AgreementState.active, "invalid state");
         _;
     }
-
-    ERC20 token;
-
-    enum PaymentStatus {Pending, Active, InDispute, Refunded, Completed }
-
-    event PaymentCreated (address indexed _contract, address indexed _payer, address indexed _payee, uint256 _amount);
-    event EscrowDisputed(address indexed _contract, address indexed _payer, address indexed _payee, uint256 _amount);
-    event PaymentCompleted(address indexed _contract, address indexed _payer, address indexed _payee, uint256 _amount);
     
-    struct Payment  {
-        address payer;
-        address payee; 
-        uint256 value;
-        uint256 expiry;
-        PaymentStatus status;
-        bool claimable;
+    constructor(ERC20 _currency, address _payer, address _payee, uint256 _value, address _custodian) Custodial(_custodian) public {
+        require(_payer != 0x0, "Invalid payer address");
+        require(_payee != 0x0, "Invalid payee address");
+        require(_value > 0, "escrow value must be greater than 0");
+
+        //TODO: Is a assertion required for _currency that will cause collateral impacts
+        currency = _currency;
+        payer = _payer;
+        payee = _payee;
+        value = _value;
+        fullReleaseApproved = false;
     }
 
-    mapping(address => Payment) public payments;
-
-    constructor(ERC20 _currency, address _custodian) public Custodial(_custodian) {
-        require(_custodian != 0x0, "can not assigned 0x0 as custodian");
-        token = _currency;
+    function deposit(uint256 _value) public PayerOnly()
+    {
+        require(_value > 0, "Invalid deposity");
+        currency.transferFrom(msg.sender, address(this), _value);
+    }
+        
+    function dispute(uint256 _value) public PayerOnly {
+        require(value >= _value, "Disputed value exceeds the original escrow value");
+        require(currency.balanceOf(address(this)) >= _value, "Disputed value exceeds the available escrow balance");
+        
+        disputeValue = _value;
+        status = EscrowStatus.InDispute;
+        //TODO: raise event
     }
 
- 
-    function createPayment(address _contract, address _payer, address _payee, uint256 _value, uint256 _expiry) public {
-        payments[_contract] = Payment(_payer, _payee, _value, _expiry, PaymetStatus.Active, false);
+    function approvalFullWithdrawal() public PayerOnly {
+        require(state == EscrowStatus.Active, "Escrow in invalid state for full widthdrawal approval");
+        status = EscrowStatus.Approved;
+        //TODO: raise event;
     }
 
-    function deposit(){
+    function refund(uint256 _value) public onlyCustodian{
+        require(state == EscrowStatus.InDisputej, "Contract is not in a disputed state for custodian to issue refund");
+        require(disputeValue >= _value, "Refund exeeds disputed value");
+        require(currency.balanceOf(address(this)) >= _value, "Refund value exceeds the available escrow balance");
 
+        currency.transferFrom(address(this), _payer, _value);
+
+        disputeValue == 0;
+        status == EscrowStatus.Active;
+        //rase event with refund and dispute values to idicate full or partial refund.
     }
     
-    function makeRedeemable (address _contract) public PayerOnly(_contract) OnlyActive(_contract)
-    {
-        contracts[_contract].redeemable = true;
-    }
-
-    function redeem (address _contract) public PayeeOnly(_contract)
-    {
-        require(contracts[_contract].redeemable == true, "Contract not available for redemption");
-        contracts[_contract].settled = true;
-        token.transferFrom(contracts[_contract].payer, contracts[_contract].payee, contracts[_contract].amount);
+    function fullWithdraw() public PayeeOnly {
+        require(disputeValue == 0, "Cannot widthdraw until dispute is resolved");
+        require(status == EscrowStatus.Approved, "Escrow is not in approved state for withdrawal");
+        uint256 escrowBalance = current.balanceOf(address(this));
+        currency.transFrom(addres(this), msg.sender, escrowBalance);
+        status = EscrowStatus.Settled;
+        //TODO: Raise event that escrow is settled
     }
 }
