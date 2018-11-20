@@ -1,0 +1,95 @@
+@import url('https://fonts.googleapis.com/css?family=Raleway')
+@import url('https://fonts.googleapis.com/css?family=Oswald')
+
+html, body{
+	margin: 0;
+	padding: 0;
+	height: 100%;
+	width: 100%;
+}
+
+.intro{
+	height:100%;
+	width: 100%;
+	margin: auto;
+	background: url(background.png) no-repeat center center fixed;
+	     -webkit-background-size: cover;
+  		 -moz-background-size: cover;
+ 		 -o-background-size: cover;
+ 		 background-size: cover;	
+	display: table;
+	position: fixed;
+	top: 0;
+	background-size: cover;
+
+}
+
+.intro .inner{
+	display: table-cell;
+	vertical-align: middle;
+	width: 100%;
+	max-width: none;
+
+}
+
+.content{
+	max-width:500px;
+	margin: 0 auto;
+	text-align: center;	
+}
+
+.content h1 {
+	font-family: 'Raleway', sans-serif;
+	color: #F9F3F4;
+	font-size: 350%;
+}
+
+.btn {
+	border-radius: 9px;
+	font-family: 'Oswald', sans-serif;
+	color: #FF6A78;
+	font-size:135%;
+	padding:10px 20px;
+	border: solid #FF6A78 3px;
+	text-transform: uppercase;
+	text-decoration: none;
+}
+
+.btn:hover {
+	color:#fff;
+	border: solid #fff 3px;
+}
+
+p {
+	font-size: 160%;
+	height: 210%;
+	margin: 10%;
+	font-family:'Raleway', sans-serif;
+	text-align: center;
+	color: #ffffff;
+	text-decoration: none;
+}
+
+a {
+	font-size: 90%;
+	font-family:'Raleway', sans-serif;
+	text-align: center;
+	color: #ffffff;
+	text-decoration: none;
+}
+
+
+
+@media screen and (max-width: 768px) {
+	.content h1 {
+		font-size: 175%;
+	}
+	.btn {
+		font-size: 100%;
+		padding: 7px 15px;
+	}
+	p {
+		font-size: 100%;
+		line-height: 160%;
+	}
+}
